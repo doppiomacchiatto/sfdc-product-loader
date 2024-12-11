@@ -38,3 +38,15 @@ This project uses a .env file that stores the following:
 
 Don't check in the client_id nor client_secret into git. Make sure that those two keys are
 not shared with **anyone**.  If you want to store the values in git, make sure to encrypt the .env file.
+
+# Running the Python Scritps #
+- flag is False - this will only check if the Price Book exists
+- products False - optional will be refactored later or will call a function to check if product exists in the standard price book.
+```bash
+./controller.py --name=Test --flag=False --products=False
+```
+If you want to create a custom pricebook and add products in a csv file...
+
+```bash
+./controller.py --name=Naughty_List --flag=True --products=True
+```
