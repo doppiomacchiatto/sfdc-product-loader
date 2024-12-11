@@ -1,5 +1,6 @@
 #always ignore .env files
 *.env
-*__pycache__
+
 #ignore directories
 .venv/
+__pycache__/
