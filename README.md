@@ -1,10 +1,15 @@
 # Product Loader Project #
-This project load products into the Salesforce product2 object.
-Next, it associates the products to the standard price book.
+This project loads products into the Salesforce product2 object.
+Next, it associates the products to the standard price book. The Products_Sample.csv 
+file contains sample products that we need to load.
 
-For the final phase, we will enable the creation of a custom price-book with the
-products that were created earlier, which are stored in a csv file.
+Finally, we will create a custom price-book with the
+products that were created earlier.
 
+## Application Files ##
+- controller.py: controls the flow.  Checks if a pricebook exists or it can create a price book.  Look at the parameters
+- loader.py: this is where the magic happens.  Creates new produdcts and adds them to the Standard PriceBook.
+- 
 # Pre-Requisite Connected Application #
 
 Create a Salesforce Connected Application.
@@ -31,5 +36,5 @@ This project uses a .env file that stores the following:
 | auth_url      | https://<name--alias>.my.salesforce.com/services/oauth2/token   |
 | instance_url  | https://<base-url>.my.salesforce.com                            |
 
-Don't check in the client_id nor client_secret into git. Make sure that those to keys are
-not shared with anyone.  If you want to store the values, make sure to encrypt the .env file.
+Don't check in the client_id nor client_secret into git. Make sure that those two keys are
+not shared with **anyone**.  If you want to store the values in git, make sure to encrypt the .env file.
