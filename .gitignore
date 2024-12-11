@@ -1,6 +1,7 @@
 #always ignore .env files
-*.env
+.env
 
 #ignore directories
 .venv/
 __pycache__/
+.idea/
