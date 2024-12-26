@@ -1,4 +1,5 @@
 import csv
+import pathlib
 import string
 from simple_salesforce import Salesforce, SalesforceAuthenticationFailed, SalesforceMalformedRequest, format_soql
 from dotenv import load_dotenv
@@ -51,8 +52,7 @@ def get_standard_pricebook_id(sfa):
     :param sfa: Simple Salesforce Session
     :return: Id of the Standard Price Book
     """
-    query = "SELECT Id FROM Pricebook2 WHERE IsStandard = true LIMIT 1"
-    _result = sfa.query(query)
+    _result = sfa.query(format_soql("SELECT Id FROM Pricebook2 WHERE IsStandard = true LIMIT 1"))
     if _result['totalSize'] == 0:
         raise Exception("Standard Price Book not found!")
     return _result['records'][0]['Id']
@@ -106,7 +106,7 @@ def get_new_pb(sfa, pb):
     print('processing')
 # Load products from CSV and upload to Salesforce
 
-def load_products(sfa, pb, file_path):
+def load_products(sfa, pb, file_path) -> str:
     """Load products from a csv file and creates a csv with result.
     :param sfa: simple salesforce session
     :param pb: Price Book Id
@@ -115,8 +115,8 @@ def load_products(sfa, pb, file_path):
     """
     pricebook_id = pb
     new_rows = []
-    with open(file_path, mode='r') as file:
-        reader = csv.DictReader(file)
+    with open(file_path, mode='r') as _file:
+        reader = csv.DictReader(_file)
         for row in reader:
             # Create Product2 record
             product = sfa.Product2.create({
@@ -138,9 +138,29 @@ def load_products(sfa, pb, file_path):
         df = pd.DataFrame(new_rows)
         df_abf = pd.concat([df, df], ignore_index=True)
         print(df_abf.head())
-        df.to_csv('ProductsDF'+pb, index=False)
+        df.to_csv('Products_DF', index=False)
+    return 'Products_DF'
 
-def load_new_pb(sfa, pb, file_path):
+def get_products_id(sfa,file_path):
+    new_products = []
+    #create list of products code
+    with open(file_path, 'r') as file:
+        reader = csv.DictReader(file)
+        for row in reader:
+            new_products.append(row['SKU'])
+            print('row: {}'.format(new_products))
+
+    _result = sf.query(format_soql("SELECT Id, ProductCode FROM Product2 WHERE ProductCode  IN {names}",names=new_products))
+    print(_result['records'][0])
+    ordered_dict = result['records']
+    df = pd.DataFrame(ordered_dict)
+    df['Pricebook2Id'] = ""
+    df.drop('attributes', axis=1, inplace=True)
+    df['UnitPrice'] = ""
+    df['isActive'] = True
+    df.to_csv('Products_DF', index=False)
+
+def load_products_custom(sfa, pb, file_path):
     """ Loads products to pricebook.
     :param sfa:
     :param pb:
@@ -148,21 +168,22 @@ def load_new_pb(sfa, pb, file_path):
     :return:
     """
     new_products = []
-    with open(file_path, 'r') as contacts:
-        df = pd.read_csv(contacts, encoding="utf-8",dtype={'Pricebook2Id':str,'Product2Id':str,'UnitPrice':float,'IsActive':bool})
+    #Pricebook2Id,Product2Id':str,'UnitPrice':float,'IsActive':bool
+    with open(file_path, 'r') as products:
+        df = pd.read_csv(products, encoding="utf-8",dtype={'Id':str,'ProductCode':str,'UnitPrice':float,'IsActive':bool})
         # Add product to Standard Price Book with default price
     for index, row in df.iterrows():
         new_pbe = {
         'Pricebook2Id':pb,
-        'Product2Id': row['Product2Id'],
-        'UnitPrice': row['UnitPrice'],
-        'IsActive':row['IsActive']
+        'Product2Id': row['Id'],
+        'UnitPrice': 1.0,
+        'IsActive':row['isActive']
         }
         new_products.append(new_pbe)
 
-    print(new_products)
+    #print(new_products)
     response = sfa.bulk.PricebookEntry.insert(new_products,batch_size=10000,use_serial=True)
-    print(response)
+    #print(response)
     counter = 0
     _result = []
     for item in response:
@@ -173,4 +194,13 @@ def load_new_pb(sfa, pb, file_path):
         return 'Successfully added products to price book'
     else:
         print(f'Errors{_result}')
-
+    return response
+if __name__ == '__main__':
+    token = get_token()
+    session = get_session(token)
+    ffile = pathlib.Path("Products_Sample.csv")
+    get_products_id(session,ffile)
+    file = pathlib.Path("Products_DF")
+    pbId = get_new_pb(session, 'Air_Gap_Plus')
+    print('pbid is {}'.format(pbId))
+    load_products_custom(session,pbId,file)
