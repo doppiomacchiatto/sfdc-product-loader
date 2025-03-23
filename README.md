@@ -50,3 +50,4 @@ If you want to create a custom pricebook and add products in a csv file...
 ```bash
 ./controller.py --name=Naughty_List --flag=True --products=True
 ```
+Keep the PriceBook name simple.  You can always login and change the name later.
