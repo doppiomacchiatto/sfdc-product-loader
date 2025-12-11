@@ -1,10 +1,10 @@
 # Product Loader Project #
 This project loads products into the Salesforce product2 object.
 Next, it associates the products to the standard price book. The Products_Sample.csv 
-file contains sample products that we need to load.
+file contains sample products that we want to load.
 
-Finally, we will create a custom price-book with the
-products that were created earlier.
+Finally, we will create a custom price-book and add the
+products that we created earlier.
 
 ## Application Files ##
 - controller.py: controls the flow.  Checks if a pricebook exists or it can create a price book.  Look at the parameters
