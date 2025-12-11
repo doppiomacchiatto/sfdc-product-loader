@@ -1,5 +1,3 @@
-from loader import get_prodfile
-
 # Product Loader Project #
 This project loads products into the Salesforce product2 object.
 Next, it associates the products to the standard price book. The Products_Sample.csv 
