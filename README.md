@@ -32,9 +32,9 @@ This project uses a .env file that stores the following:
 |---------------|-----------------------------------------------------------------|
 | client_id     | The connected apps' Consumer Key                                |
 | client_secret | The connected app's Consumer Secret                             |
-| redirect_url  | https://<name--alias> .my.salesforce.com/services/oauth2/success |
-| auth_url      | https://<name--alias> .my.salesforce.com/services/oauth2/token   |
-| instance_url  | https://<base-url> .my.salesforce.com                            |
+| redirect_url  | https://${name--alias}.my.salesforce.com/services/oauth2/success |
+| auth_url      | https://${name--alias}.my.salesforce.com/services/oauth2/token   |
+| instance_url  | https://${base-url}.my.salesforce.com                            |
 | filedir       | ./product                                                       |
 | filename      | <filename.csv>                                                  |   
 
