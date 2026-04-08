@@ -60,11 +60,18 @@ def get_filedir():
     return kv
 
 def get_prodfile():
-    first_key = next(iter(get_filedir()))
-    first_value = get_filedir()[first_key]
-    _abspath = first_value / first_key
-    print('_abspath: {}'.format(_abspath))
-    return None
+    try:
+        filedir = get_filedir()
+        first_key = next(iter(filedir))
+        first_value = filedir[first_key]
+        _abspath = first_value / first_key
+        if not _abspath.exists():
+            raise FileNotFoundError(f"Product file not found: {_abspath}")
+        print('_abspath: {}'.format(_abspath))
+        return _abspath
+    except Exception as e:
+        print(f'Error getting product file: {e}')
+        raise
 
 # Retrieve Standard Price Book ID
 def get_standard_pricebook_id(sfa):
@@ -116,8 +123,7 @@ def get_new_pb(sfa, pb):
     :return:
     """
     try:
-        query = "SELECT Id, Name FROM Pricebook2 WHERE Name ='" + pb + "'LIMIT 1"
-        _result = sfa.query(query)
+        _result = sfa.query(format_soql("SELECT Id, Name FROM Pricebook2 WHERE Name = {} LIMIT 1", pb))
         if _result['totalSize'] == 0:
             raise Exception(f"Price Book not found! {pb}")
         return _result['records'][0]['Id']
