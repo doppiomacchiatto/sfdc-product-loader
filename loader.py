@@ -9,16 +9,22 @@ import pandas as pd
 
 sf = None
 
+global filedir
+global prodfile
+
 def get_token() -> string:
     """gets the Salesforce Access Token
     return: string token
     """
+
     load_dotenv()
     # Update the .env file with your Salesforce connected app's credentials
-    client_id = os.getenv('client_id')
-    client_secret = os.getenv('client_secret')
+    client_id = os.getenv('CLIENT_ID')
+    client_secret = os.getenv('CLIENT_SECRET')
     headers = {'Content-Type': 'application/x-www-form-urlencoded'}
-    auth_url = os.getenv('auth_url')
+    auth_url = os.getenv('AUTH_URL')
+    filedir = os.getenv('FILEDIR')
+    prodfile = os.getenv('FILENAME')
     response = requests.post(auth_url, data={'client_id': client_id,
                                              'client_secret': client_secret,
                                              'grant_type': 'client_credentials'}, headers=headers)
@@ -31,20 +37,34 @@ def get_token() -> string:
     return json_res['access_token']
 
 
-def get_session(token):
+def get_session(_token):
     """
     Get the Session Token from salesforce
-    :param access token:
+    :param _token: SFDC Access token
     :return: Token
     """
     global sf
     print('Getting Salesforce session...')
     _instance_url = os.getenv('instance_url')
     try:
-        sf = Salesforce(instance_url=_instance_url,session_id=token)
+        sf = Salesforce(instance_url=_instance_url,session_id=_token)
     except SalesforceAuthenticationFailed as sae:
         print(f'SF Oauth authentication failed: {sae}')
     return sf
+
+def get_filedir():
+    load_dotenv(verbose=True)
+    prodfile = os.getenv('FILENAME')
+    kv = {prodfile: pathlib.Path(os.getenv('FILEDIR'))}
+    print('prodfile: {}'.format(kv[prodfile]))
+    return kv
+
+def get_prodfile():
+    first_key = next(iter(get_filedir()))
+    first_value = get_filedir()[first_key]
+    _abspath = first_value / first_key
+    print('_abspath: {}'.format(_abspath))
+    return None
 
 # Retrieve Standard Price Book ID
 def get_standard_pricebook_id(sfa):
@@ -97,10 +117,10 @@ def get_new_pb(sfa, pb):
     """
     try:
         query = "SELECT Id, Name FROM Pricebook2 WHERE Name ='" + pb + "'LIMIT 1"
-        result = sfa.query(query)
-        if result['totalSize'] == 0:
+        _result = sfa.query(query)
+        if _result['totalSize'] == 0:
             raise Exception(f"Price Book not found! {pb}")
-        return result['records'][0]['Id']
+        return _result['records'][0]['Id']
     except Exception as e:
         print(f'Exception: {e}')
     print('processing')
@@ -150,7 +170,7 @@ def get_products_id(sfa,file_path):
             new_products.append(row['SKU'])
             print('row: {}'.format(new_products))
 
-    _result = sf.query(format_soql("SELECT Id, ProductCode FROM Product2 WHERE ProductCode  IN {names}",names=new_products))
+    _result = sfa.query(format_soql("SELECT Id, ProductCode FROM Product2 WHERE ProductCode  IN {names}",names=new_products))
     print(_result['records'][0])
     ordered_dict = result['records']
     df = pd.DataFrame(ordered_dict)
@@ -195,12 +215,14 @@ def load_products_custom(sfa, pb, file_path):
     else:
         print(f'Errors{_result}')
     return response
+
 if __name__ == '__main__':
-    token = get_token()
-    session = get_session(token)
-    ffile = pathlib.Path("Products_Sample.csv")
-    get_products_id(session,ffile)
-    file = pathlib.Path("Products_DF")
-    pbId = get_new_pb(session, 'Air_Gap_Plus')
-    print('pbid is {}'.format(pbId))
-    load_products_custom(session,pbId,file)
+    #token = get_token()
+   # session = get_session(token)
+    ffile = get_prodfile()
+    print('prodfile: {}'.format(ffile))
+    #get_products_id(session,ffile)
+   # file = pathlib.Path("product/Products_DF")
+   # pbId = get_new_pb(session, 'Air_Gap_Plus')
+   # print('pbid is {}'.format(pbId))
+   # load_products_custom(session,pbId,file)
