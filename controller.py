@@ -5,7 +5,7 @@ from pathlib import Path
 import click
 
 from loader import create_pricebook, get_token, get_session, load_products, load_products_custom, \
-    get_standard_pricebook_id, get_new_pb
+    get_standard_pricebook_id, get_new_pb, get_filedir, get_prodfile
 
 
 @click.command()
@@ -25,29 +25,34 @@ def manage_pricebook(name,create, products, stdpb, pbe):
     token: str = get_token()
     session = get_session(token)
     result = create_pricebook(session,name,create)
+    _dir = get_filedir()
+
     if result['totalSize'] == 0:
         print("Price book does not exist.  Create with True or python ./controller.py --help")
     else:
         print(f"Price book Exists: {name}")
     if products == "True" or pbe == "True":
-        add_products(name,stdpb,pbe)
+        add_products(name,stdpb,pbe,_dir)
     else:
         print("You chose not to add products.  Run python ./controller.py --help again if you want to add products.")
 
 
-def add_products(name, std, pbe):
+def add_products(name, std, pbe,_dir):
     """
     This function assumes that you need to create products for the first time.  It will call the loader function that
     creates the product and add it to the standard pricebook.  In Salesforce all products must be added to the standard
     pricebook.
     :param name: pricebook name
+    :param std : standard pricebook name
+    :param pbe : custom pricebook name
+    :param _dir: file directory
     """
     global prod_file
     global file_name
 
     token: str = get_token()
     session = get_session(token)
-    file = pathlib.Path("Products_Sample.csv")
+    file = get_prodfile()
     print(file)
     print(f'product flag: {name}')
     # Add Products to standard pricebook
@@ -55,16 +60,17 @@ def add_products(name, std, pbe):
     if std == "True":
         std_id = get_standard_pricebook_id(session)
         file_name = load_products(session,std_id,file)
-        file_df = pathlib.Path(file_name)
-        prod_file = pathlib.Path(file_df)
 
     # Add products to custom pricebook
     if pbe == "True":
+        path = Path(_dir)
+        #Temp file used for processing the products.
+        #TODO - Make this a key/value in a .conf file
         file_name = 'Products_DF'
         pbid = get_new_pb(session,name)
-        file_df = pathlib.Path(file_name)
-        prod_file = pathlib.Path(file_df)
-        result = load_products_custom(session, pbid, prod_file)
+        file_df = path / file_name
+       # prod_file = pathlib.Path(file_df)
+        result = load_products_custom(session, pbid, file_df)
         # add logic to parse result its list of dictionary
         # {'success': True, 'created': True, 'id': '01uHs00000XF7v4IAD', 'errors': []},
         print(result)
